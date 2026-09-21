@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Simulación Educativa de Phishing</title>
+<style>
+  :root {
+    --bg: #fafafa;
+    --panel: #ffffff;
+    --border: #dbdbdb;
+    --text: #262626;
+    --muted: #8e8e8e;
+    --link: #385185;
+    --warn-bg: #7a1f1f;
+    --warn-text: #ffffff;
+    --accent: #c23616;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100%;
+    background: var(--bg);
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* ---------- Banner de advertencia permanente ---------- */
+  .warn-banner {
+    width: 100%;
+    background: repeating-linear-gradient(
+      45deg,
+      var(--warn-bg),
+      var(--warn-bg) 14px,
+      #5c1414 14px,
+      #5c1414 28px
+    );
+    color: var(--warn-text);
+    text-align: center;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .warn-banner span {
+    background: rgba(0,0,0,0.35);
+    padding: 4px 10px;
+    border-radius: 4px;
+  }
+
+  /* ---------- "Header" que imita el look general, no el logo real ---------- */
+  .fake-topbar {
+    width: 100%;
+    max-width: 980px;
+    padding: 18px 20px 0;
+    text-align: center;
+  }
+  .fake-wordmark {
+    font-family: "Brush Script MT", cursive;
+    font-size: 40px;
+    color: #333;
+    letter-spacing: 1px;
+    margin: 10px 0 2px;
+  }
+  .fake-wordmark small {
+    display: block;
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  /* ---------- Card de login ---------- */
+  main {
+    width: 100%;
+    max-width: 350px;
+    padding: 24px 16px 60px;
+  }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 34px 40px 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .watermark {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    transform: rotate(-22deg);
+    font-size: 26px;
+    font-weight: 800;
+    color: rgba(194, 54, 22, 0.14);
+    letter-spacing: 2px;
+    text-align: center;
+    line-height: 1.3;
+  }
+  .card > * { position: relative; z-index: 1; }
+
+  .field {
+    width: 100%;
+    padding: 10px 8px;
+    margin-bottom: 8px;
+    background: #fafafa;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    font-size: 13px;
+  }
+  .field:focus { outline: 1px solid #a8a8a8; background: #fff; }
+
+  .btn {
+    width: 100%;
+    padding: 8px;
+    margin-top: 10px;
+    background: #4a9fd8;
+    opacity: 0.55;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .btn.active { opacity: 1; }
+
+  .or-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 16px 0;
+  }
+  .or-row div { flex: 1; height: 1px; background: var(--border); }
+  .or-row span { font-size: 12px; font-weight: 600; color: var(--muted); }
+
+  .forgot {
+    text-align: center;
+    font-size: 12px;
+    color: var(--link);
+    margin-top: 4px;
+  }
+
+  .signup-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    margin-top: 12px;
+    padding: 18px;
+    text-align: center;
+    font-size: 14px;
+  }
+  .signup-card a { color: var(--link); font-weight: 700; text-decoration: none; }
+
+  /* ---------- Panel de "qué acaba de pasar" (pedagógico) ---------- */
+  .lesson {
+    width: 100%;
+    max-width: 350px;
+    margin-top: 22px;
+    background: #fff8f6;
+    border: 1px solid #f1c5b8;
+    border-radius: 8px;
+    padding: 16px 18px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .lesson h3 {
+    margin: 0 0 8px;
+    font-size: 14px;
+    color: var(--accent);
+  }
+  .lesson .captured {
+    background: #fff;
+    border: 1px dashed #d9a290;
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin: 10px 0;
+    font-family: "Courier New", monospace;
+    font-size: 12px;
+    word-break: break-all;
+    color: #444;
+  }
+  .lesson ul { margin: 8px 0 0; padding-left: 18px; }
+  .lesson p.note {
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  footer {
+    width: 100%;
+    text-align: center;
+    padding: 24px 16px 40px;
+    font-size: 11px;
+    color: var(--muted);
+    max-width: 500px;
+  }
+  footer .tag {
+    display: inline-block;
+    background: var(--warn-bg);
+    color: #fff;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 3px;
+    margin-bottom: 10px;
+    letter-spacing: 0.5px;
+  }
+</style>
+</head>
+<body>
+
+  <div class="warn-banner">
+    ⚠ <span>SIMULACIÓN EDUCATIVA — ESTO NO ES INSTAGRAM — NINGÚN DATO SE ENVÍA NI SE GUARDA</span>
+  </div>
+
+  <div class="fake-topbar">
+    <div class="fake-wordmark">
+      Instagrxm
+      <small>MAQUETA DE ESTUDIO — NO ES UN SITIO REAL</small>
+    </div>
+  </div>
+
+  <main>
+    <div class="card">
+      <div class="watermark">SOLO<br>FINES<br>EDUCATIVOS</div>
+
+      <form id="demoForm" autocomplete="off">
+        <input class="field" id="user" type="text" placeholder="Usuario, correo electrónico" autocomplete="off">
+        <input class="field" id="pass" type="password" placeholder="Contraseña" autocomplete="off">
+        <input class="field" id="newpass" type="password" placeholder="Nueva contraseña" autocomplete="off">
+        <button type="submit" class="btn" id="submitBtn">Iniciar sesión</button>
+      </form>
+
+      <div class="or-row"><div></div><span>O</span><div></div></div>
+      <div class="forgot">¿Olvidaste tu contraseña?</div>
+    </div>
+
+    <div class="signup-card">
+      ¿No tienes una cuenta? <a href="#">Regístrate</a>
+    </div>
+
+    <div class="lesson" id="lesson" hidden>
+      <h3>Esto es lo que acaba de pasar</h3>
+      <p>Un formulario como este, alojado en un dominio que <strong>no</strong> es instagram.com, acaba de capturar en el navegador lo que tipeaste. En un ataque real, estos datos se enviarían en silencio a un servidor controlado por el atacante:</p>
+      <div class="captured" id="capturedData"></div>
+      <ul>
+        <li>La estética imitaba la marca para generar confianza automática.</li>
+        <li>El campo "Nueva contraseña" es una técnica extra: si la víctima reutiliza contraseñas, el atacante también obtiene la de otras cuentas.</li>
+        <li>Nada de esto salió de tu navegador ni fue a ningún servidor — esta página no tiene backend.</li>
+      </ul>
+      <p class="note">Señales reales para detectar esto: revisar la URL/dominio, desconfiar de links no solicitados que piden login, activar verificación en dos pasos, usar un gestor de contraseñas que no autocompletará en un dominio falso.</p>
+    </div>
+  </main>
+
+  <footer>
+    <div class="tag">MATERIAL DE INFORME — NO REPLICAR NI DISTRIBUIR COMO SITIO REAL</div>
+    <p>Esta página fue creada como ejemplo ilustrativo para un informe académico sobre ataques de phishing. Deliberadamente no es una réplica exacta del sitio real, no envía datos a ningún servidor, y no debe usarse para engañar a terceros.</p>
+  </footer>
+
+<script>
+  const form = document.getElementById('demoForm');
+  const btn = document.getElementById('submitBtn');
+  const userField = document.getElementById('user');
+  const passField = document.getElementById('pass');
+
+  function toggleBtn() {
+    btn.classList.toggle('active', userField.value.trim() && passField.value.trim());
+  }
+  userField.addEventListener('input', toggleBtn);
+  passField.addEventListener('input', toggleBtn);
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const user = document.getElementById('user').value || '(vacío)';
+    const pass = document.getElementById('pass').value ? '•'.repeat(document.getElementById('pass').value.length) + '  (texto plano en un ataque real)' : '(vacío)';
+    const newpass = document.getElementById('newpass').value ? '•'.repeat(document.getElementById('newpass').value.length) + '  (texto plano en un ataque real)' : '(vacío)';
+
+    document.getElementById('capturedData').textContent =
+      'Usuario capturado: ' + user + '\n' +
+      'Contraseña capturada: ' + pass + '\n' +
+      'Nueva contraseña capturada: ' + newpass;
+
+    document.getElementById('lesson').hidden = false;
+    document.getElementById('lesson').scrollIntoView({behavior: 'smooth', block: 'start'});
+  });
+</script>
+</body>
+</html>
